@@ -27,9 +27,16 @@ climate <- "RCP0"
 # climate <- "RCP45"
 # climate <- "RCP48"
 
+## Model parameters for wood-decaying fungi (WDF):
 model_params_wdf <- read.csv("data/Table_SummaryModelCompare-GLMnewfitting_03juli2020_TS.csv")
+
+## Minimum age of a forest to host the species:
 min_age <- c(87, 75, 64, 64, 76, 83) ## From table S4.3
 names(min_age) <- as.character(model_params_wdf$Species)
+
+## The original model fitting data set to calculate mean and SD from:
+## https:/doi.org/10.5879/ECDS/2017-03-23.1/1
+model_fitting_wdf <- read.table("data/presenceabsencedata.txt", sep = "", header = TRUE)
   
 ## -----------------------------------------------------------------------------
 
@@ -60,18 +67,19 @@ colnames(mp) <- as.character(model_params_wdf$Species)
 
 ## 4. Add species to d_cov according to model formulas -------------------------
 
-## Standardise Heureka variables; those were standardised in model fitting:
-## Not sure whether this is the right way to do it, since the SD changes 
-## depending on which period and which management regime is chosen. ????????????
-d_cov$VS_std <- d_cov$VolumeSpruce/sd(d_cov$VolumeSpruce[d_cov$period == 0])
-d_cov$Age_std <- d_cov$Age/sd(d_cov$Age[d_cov$period == 0])
-# d_cov$temp_std <- d_cov$temp/sd(d_cov$temp[d_cov$period == 0])
-# d_cov$precip_std <- d_cov$precip/sd(d_cov$precip[d_cov$period == 0])
-# d_cov$st_std <- d_cov$swe_twi/sd(d_cov$swe_twi[d_cov$period == 0])
+## Standardise Heureka variables with mean and SDs from original model data: 
+## Verfiy with Louise Mair that centering was used!!!
+d_cov$VS_std <- (d_cov$VolumeSpruce - mean(model_fitting_wdf$gran_max))/sd(model_fitting_wdf$gran_max)
+d_cov$Age_std <- (d_cov$Age - mean(d_cov$Age[d_cov$period == 0]))/sd(d_cov$Age[d_cov$period == 0])
+# d_cov$temp_std <- d_cov$temp/sd(model_fitting_wdf$tempann)
+# d_cov$precip_std <- d_cov$precip/sd(model_fitting_wdf$precsummjjason)
+# d_cov$st_std <- d_cov$swe_twi/sd(model_fitting_wdf$swe_twi)
+sd(model_fitting_wdf$triabi)
 
 pred_WDF <- function(x){
-  DWC <- ifelse(x$DeadWoodVolumeSpruce > 0, 1, 0)
+  DwC <- ifelse(x$DeadWoodVolumeSpruce > 0, 1, 0)
   AgC <- ifelse(x$Age > min_age, 1, 0 )
+  # RpC <- ifelse(x$ret_patch == 1, 0.1, 1) ## Define ret_patch in d_cov before!
   WDF <- inv.logit(mp["Intercept", ] + 
                      mp["z.ald_max", ]*x$Age_std + 
                      mp["z.gran_max", ]*x$VS_std +
@@ -83,7 +91,7 @@ pred_WDF <- function(x){
                      # mp["z.ald_max.z.tempann..09juli2020.", ]*x$Age_std*x$temp_std +
                      # mp["z.swe_twi", ]*x$st_std
                    )
-  as.list(DWC*AgC*WDF)
+  as.list(DwC*AgC*WDF) ## Multiply also with RpC once added above!
 }
 
 ## Predict WDF data:
@@ -94,6 +102,6 @@ d_pred <- d_cov[, pred_WDF(.SD), by = 1:nrow(d_cov)]
 out <- cbind(d_cov[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
                    d_pred[,-1])
 
-write.csv(out, paste0("clean/MFO_WDF_", climate, ".csv"))
+write.csv(out, paste0("clean/MFO_WDF_", climate, ".csv"), row.names = FALSE)
   
 ## -------------------------------END-------------------------------------------
