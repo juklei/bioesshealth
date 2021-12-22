@@ -67,7 +67,7 @@ colnames(mp) <- as.character(model_params_wdf$Species)
 ## 4. Add species to d_cov according to model formulas -------------------------
 
 ## Standardise Heureka variables with mean and SDs from original model data: 
-## Verfiy with Louise Mair that centering was used!!!
+## Verfiy with Louise Mair that centering was used!!! refit models using only scaled and both and evaluate parameters
 d_cov$VS_std <- (d_cov$VolumeSpruce - mean(model_data_wdf$gran_max))/sd(model_data_wdf$gran_max)
 d_cov$Age_std <- (d_cov$Age - mean(model_data_wdf$ald_max))/sd(model_data_wdf$ald_max)
 # d_cov$temp_std <- d_cov$temp/sd(model_data_wdf$tempann)

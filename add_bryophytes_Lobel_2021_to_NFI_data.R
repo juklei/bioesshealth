@@ -33,7 +33,8 @@ period_0 <- 2010
 
 ## Climate data related to the NFI plots:
 NFI <- read.csv("data/NFI.plots_ClimateData_for_mosses.txt", sep = "", header = TRUE) 
-colMeans(NFI[, c(6:39)]) ## Identify why some are NA!!! What is the effect of this on the entire prediciton?
+NFI[is.na(NFI$slope),] ## Identify why some are NA!!! What is the effect of this on the entire prediciton?
+## Most species have at least one of the NA variables as covariate
 
 ## Model parameters for bryophytes:
 # model_params <- read.table("data/Bryo_CoeffLogReg_exclConn_inclFAge.txt", 
@@ -64,7 +65,7 @@ d_cov <- d_cov[d_cov$period == 0,] ## REDUCED SIZE FOR TRIAL !!!!!!!!!!!!!!!!!!!
 ## 2. Add climate data to d_cov ------------------------------------------------
 
 ## Harmonise style of "Description" for merging:
-d_cov$Description <- gsub(" ", "_", d_cov$Description)
+NFI$Description <- gsub("_", " ", NFI$Description)
 
 ## Year needs to period and adjusted for missing years:
 NFI$period <- (NFI$Year - period_0)/5
