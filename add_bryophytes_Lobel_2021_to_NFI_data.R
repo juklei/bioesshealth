@@ -67,11 +67,11 @@ d_cov <- d_cov[d_cov$period == 0,] ## REDUCED SIZE FOR TRIAL !!!!!!!!!!!!!!!!!!!
 ## Harmonise style of "Description" for merging:
 NFI$Description <- gsub("_", " ", NFI$Description)
 
-## Year needs to period and adjusted for missing years:
+## Year needs to become period and adjusted for missing years:
 NFI$period <- (NFI$Year - period_0)/5
 
 ## Add period 0, 19 & 20 to the data: Discuss this step with Tord !!!!!!!!!!!!!!
-## For now I use period 1 for period 1 and period 18 for 19 & 20
+## For now I use period 1 for period 0 and period 18 for 19 & 20
 T1 <- NFI[NFI$period == 1, ]; T1$period <- 0
 T2 <- NFI[NFI$period == 18, ]; T2$period <- 19
 T3 <- NFI[NFI$period == 18, ]; T3$period <- 20
@@ -166,7 +166,7 @@ if(all(min_age$Species[min_age$Species %in% colnames(mp)] == colnames(mp))){
 ## Define prediction function:
 pred_bry <- function(x){
   AgC <- ifelse(x$Age > min_age_q2.5, 1, 0 )
-  # RpC <- ifelse(x$ret_patch == 1, 0.1, 1) ## Define ret_patch in d_cov before!
+  # RpC <- ifelse(x$ret_patch == 1, 0.1, 1) ## Define ret_patch in d_cov before! How to know which controlCategor & Alternative contains a retention patch? Need to indicate this in future HEureka simulations??
   bry <- inv.logit(mp["(Intercept)", ] + 
                      mp["z.ald_max", ]*x$Age_std + 
                      mp["z.gran_max", ]*x$VolumeSpruce +
@@ -202,7 +202,7 @@ pred_bry <- function(x){
   as.list(AgC*bry) ## Multiply also with RpC once added above!
 }
 
-## Predict WDF data:
+## Predict Bryophyte data:
 d_pred <- d_cov[, pred_bry(.SD), by = 1:nrow(d_cov)]
   
 ## 5. Create output data -------------------------------------------------------

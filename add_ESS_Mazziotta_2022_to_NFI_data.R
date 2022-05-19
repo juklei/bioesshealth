@@ -36,6 +36,11 @@ model_params <- read.csv("data/ESS.mean.myposteriorsample1_df.beta - Copy.csv")
 
 ## Data with mean and SD from the original data:
 model_data <- read.csv("data/ESS.R.mean.sd.csv")
+
+## Tree densities in kg/m3: ## For now estimates from www.wood-database.com
+dens_spruce <- 405
+dens_pine <- 550
+dens_birch <- 625
   
 ## -----------------------------------------------------------------------------
 
@@ -51,7 +56,11 @@ d_cov <- fread(paste0(dir, "/data/", file),
 
 d_cov <- d_cov[d_cov$period == 0,] ## REDUCED SIZE FOR TRIAL !!!!!!!!!!!!!!!!!!!
 
-## 2. Add climate data to d_cov ------------------------------------------------
+## 2. Calculate biomass and add climate data to d_cov --------------------------
+
+d_cov$bmSpruce <- d_cov$VolumeSpruce*dens_spruce/10000 ## Mazziotta et al. used kg/m2
+d_cov$bmPine <- d_cov$VolumePine*dens_pine/10000
+d_cov$bmBirch <- d_cov$VolumeBirch*dens_birch/10000
 
 ## Add period 19 & 20 to the data: Discuss this step with Tord !!!!!!!!!!!!!!!!!
 ## For now I use period 1 for period 1 and period 18 for 19 & 20
@@ -82,7 +91,7 @@ dimnames(mp)[[1]] <- as.character(model_params$Covariate)
 d_cov <- merge(d_cov, model_data, by = "region2")
 
 ## Define prediction function: ## How does Phi come in here ????? 
-## It is a precision parameter and therefor eobsolete for prediction ???
+## It is a precision parameter and therefor obsolete for prediction ???
 ## e.g.: https://stats.stackexchange.com/questions/524960/beta-regression-how-to-interpret-the-p-value-of-the-phi-coefficient#:~:text=In%20beta%20regression%20you%20assume%20that%20the%20dependent,-%20just%20like%20the%20mean%20%CE%BC%20as%20well.
 pred_ESS <- function(x){
   ESS <- mp["trak-level intercept", ] +
@@ -91,14 +100,14 @@ pred_ESS <- function(x){
           mp["stand age", ]*(x$Age-x$age.mean)/x$age.sd +
           mp["soil moisture", ]*(x$SoilMoist-x$Smoist.mean)/x$Smoist.sd + ## Cont or integer?
           mp["peat soil (Y/N)", ]*(x$peat-x$peat.mean)/x$peat.sd + ## Standardising a categorical variable is strange to me?
-          mp["spruce biomass", ]*(x$VolumeSpruce-x$spruce.mean)/x$spruce.sd +
-          mp["pine biomass", ]*(x$VolumePine-x$pine.mean)/x$pine.sd +
-          mp["birch biomass", ]*(x$VolumeBirch-x$birch.mean)/x$birch.sd +
+          mp["spruce biomass", ]*(x$bmSpruce-x$spruce.mean)/x$spruce.sd +
+          mp["pine biomass", ]*(x$bmPine-x$pine.mean)/x$pine.sd +
+          mp["birch biomass", ]*(x$bmBirch-x$birch.mean)/x$birch.sd +
           mp["stand age^2", ]*(x$Age^2-x$age2.mean)/x$age2.sd +
           mp["soil moisture^2", ]*(x$SoilMoist^2-x$Smoist2.mean)/x$Smoist2.sd + ## Cont or integer?
-          mp["spruce biomass * stand age", ]*(x$VolumeSpruce*x$Age-x$agexspruce.mean)/x$agexspruce.sd +
-          mp["pine biomass * stand age", ]*(x$VolumePine*x$Age-x$agexpine.mean)/x$agexpine.sd +
-          mp["birch biomass * stand age", ]*(x$VolumeBirch*x$Age-x$agexbirch.mean)/x$agexbirch.sd
+          mp["spruce biomass * stand age", ]*(x$bmSpruce*x$Age-x$agexspruce.mean)/x$agexspruce.sd +
+          mp["pine biomass * stand age", ]*(x$bmPine*x$Age-x$agexpine.mean)/x$agexpine.sd +
+          mp["birch biomass * stand age", ]*(x$bmBirch*x$Age-x$agexbirch.mean)/x$agexbirch.sd
   as.list(c(inv.logit(ESS[c(1:2, 4)]), exp(ESS[3]))) ## Different link functions per column!
 }
 
@@ -111,7 +120,7 @@ out <- cbind(d_cov[, c("Description", "period", "AlternativeNo", "ControlCategor
                        "Richness", "BilberryCover", "Wildfood")], ## Only for testing !!!
                    d_pred[,-1])
 
-fwrite(out, paste0("clean/MFO_ESS_", climate, ".csv"), row.names = FALSE)
+# fwrite(out, paste0("clean/MFO_ESS_", climate, ".csv"), row.names = FALSE)
   
 ## TEMP ----------------- TEMP ----------------------- TEMP --------------------
 
@@ -122,19 +131,9 @@ ggplot(out[sel, ]) + geom_point(aes(Richness_old, Richness)) + geom_abline(slope
 ggplot(out[sel, ]) + geom_point(aes(Wildfood_old, Wildfood)) + geom_abline(slope = 1)
 ggplot(out[sel, ]) + geom_point(aes(BilberryCover, Bilberry.beta))  + geom_abline(slope = 1)
 
-## Many predictions too high:
-nrow(out[out$Richness > max(out$Richness_old),])/nrow(out)
+## Wood densities seem ok and the biomass variables are in kg/m2: Now we need actually 
+## used wood densities or preferrably data directly from Heureka: 
+## "Biomass Above Ground All Species" https://www.heurekaslu.se/wiki/Biomass_Results
 
-## The means and SDs delivered are very different from when I calculate them from the
-## Heureka data:
-mean(d_cov$agexspruce.mean)/mean(d_cov$VolumeSpruce*d_cov$Age)
-mean(d_cov$agexspruce.sd)/sd(d_cov$VolumeSpruce*d_cov$Age)
-
-mean(d_cov$spruce.mean)/mean(d_cov$VolumeSpruce)
-mean(d_cov$spruce.sd)/sd(d_cov$VolumeSpruce)
-
-## The problem seems that biomass in Mazziotta et al. != VolSpruce !!!!!!!!!!!!!
-## How do I calculate biomass? By using wood densities? Directly from Heureka?
-## Is it measured by ha or by m2?????
 
 ## -------------------------------END-------------------------------------------
