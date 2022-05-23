@@ -135,7 +135,7 @@ d_cov$VolDecid <- rowSums(d_cov[, c("VolumeAspen", "VolumeBeech", "VolumeOak",
                                     "VolumeBirch", "VolumeOtherBroadLeaf", 
                                     "VolumeSouthernBroadleaf")])
 d_cov$VolOakBeech <- rowSums(d_cov[, c("VolumeBeech", "VolumeOak")])
-d_cov$log.DistWaterCourse <- log(d_cov$DistWaterCourse)
+d_cov$log.DistWaterCourse <- log(d_cov$DistWaterCourse) ## DistWaterCourse != 0
 
 ## Standardise Heureka variables with mean and SDs from original model data:
 scale <- function(x, covariate){
