@@ -23,9 +23,6 @@
 ## Use table S4 to standardise the variables coming from HEureka:
 ## How to handle the minimum deadwood diameters? Use mean?
 
-## Formula to calculate occupancy at every timestep:
-#p_occ[periodN] <- (1-p_occ[periodN-1])*p_col[periodN]+p_occ[periodN-1]*(1-p_ext[periodN])
-
 ## Use table S5 to define occupancy at period = 0
 ## Use table S6 to define extinction / colonization probability and with the 
 ## formula above the occupancy at timestep period = 1:20
@@ -56,6 +53,9 @@ rm(list = ls())
 
 library(data.table)
 library(boot)
+library(VGAM)
+
+start <- Sys.time()
 
 dir <- "C:/MultiforestOptimisationNotebook/multiforestOptimizationNotebook"
 dir.create("clean")
@@ -67,21 +67,21 @@ params <- read.csv("data/Moor_WDF_model_parameters.csv")
 mean_sd <- read.csv("data/Moor_WDF_mean&SD.csv", sep = ",")
 
 ## Which species use the model mean and SD for diameter >= 5cm?
-dbh_spec <- c("T. abietinum", "G. sepiarium", "P. viticola")
+dbh_5_spec <- c("T. abietinum", "G. sepiarium", "P. viticola")
+dbh_10_spec <- levels(params$Species)[which(!levels(params$Species) %in% dbh_5_spec)]
 
 d_cov <- fread(paste0(dir, "/data/MultiForestResults210704_20Periods_InclIntensivve_NoCC.csv"),  
                select = c("Description", "period", "AlternativeNo", "ControlCategoryName", 
                           "Age", "VolumeSpruce", "DeadWoodVolumeSpruce"), 
                   sep = ";", blank.lines.skip = TRUE)
 
-## Select random 0.1% of NFI plots:
+## Select random share of NFI plots:
+share <- 0.01
 d_unique <- unique(d_cov$Description)
-select <- sample(d_unique, 0.001*length(d_unique))
+select <- sample(d_unique, share*length(d_unique))
 d_cov <- d_cov[d_cov$Description %in% select, ]
 
 ## 2. Arrange model params for WDF ---------------------------------------------
-
-
 
 ## Add Inf or -Inf were probabilities are set to 0 or 1, e.g. logit(1)=Inf:
 params[params$Model.type == "Deterministic: Pcol = 0, Pext = 1" & params$probability == "colonization",
@@ -104,75 +104,109 @@ mp <- dcast(mp, formula = Stand.age.group.min + Stand.age.group.max + probabilit
 ## All NA's are 0, e.g. all parameters that are not in the model are 0:
 mp[is.na(mp)] <- 0
 
-## 3. Predict initial state ----------------------------------------------------
+## 3. Create prediction function generic for all probability states ------------
 
-## Use only inital state covariates:
-dc_init <- d_cov[d_cov$ControlCategoryName == "Initial state", ]
 
-## Reduce mp and mean_SD to start occupancy parameters:
-mp_init <- mp[mp$probability == "start", ]
-msd_init <- as.data.table(mean_sd[mean_sd$Model.component == "colonization", ])
-
-pred_init <- function(x){
+pred_prob <- function(x, probability){
   ## Chose model and mean_SD by forest age of Heureka row x:
-  mp_T <- mp_init[mp_init$Stand.age.group.min <= round(x$Age) & mp_init$Stand.age.group.max >= round(x$Age), ]
-  msd_T <- msd_init[msd_init$Stand.age.group.min <= round(x$Age) & msd_init$Stand.age.group.max >= round(x$Age), ]
+  mp_T <- mp_red[mp_red$Stand.age.group.min <= round(x$Age) & mp_red$Stand.age.group.max >= round(x$Age), ]
+  msd_T <- msd_red[msd_red$Stand.age.group.min <= round(x$Age) & msd_red$Stand.age.group.max >= round(x$Age), ]
   ## Create matrices with variables as row names to have less code below:
   mp_T <- as.matrix(mp_T[, -c(1:3)], rownames = "variable")
   msd5 <- as.matrix(msd_T[msd_T$Minimum.Diameter == "5", -c(2:5)], rownames = "Variable")
   msd10 <- as.matrix(msd_T[msd_T$Minimum.Diameter == "10", -c(2:5)], rownames = "Variable")
   ## Make predictions for the two different diameter classes:
-  WDF5 <- mp_T["Intercept", dbh_spec] + 
-          mp_T["Dead.wood.volume", dbh_spec]*
-          (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd5[1, 1])/msd5[1, 2] +
-          mp_T["Stand.age.at.T2", dbh_spec]*
-          (log(max(x$Age, 1e-12)) - msd5[2, 1])/msd5[2, 2] +
-          mp_T["Spruce.volume", dbh_spec]*
-          (log(max(x$VolumeSpruce, 1e-12)) - msd5[3, 1])/msd5[3, 2]
-  WDF10 <- mp_T["Intercept", which(!colnames(mp_T) %in% dbh_spec)] +
-           mp_T["Dead.wood.volume", which(!colnames(mp_T) %in% dbh_spec)]*
-           (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd10[1, 1])/msd10[1, 2] +
-           mp_T["Stand.age.at.T2", which(!colnames(mp_T) %in% dbh_spec)]*
-           (log(max(x$Age, 1e-12)) - msd10[2, 1])/msd10[2, 2] +
-           mp_T["Spruce.volume", which(!colnames(mp_T) %in% dbh_spec)]*
-           (log(max(x$VolumeSpruce, 1e-12)) - msd10[3, 1])/msd10[3, 2]
+  WDF5 <- mp_T["Intercept", dbh_5_spec] + 
+    mp_T["Dead.wood.volume", dbh_5_spec]*
+    (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd5[1, 1])/msd5[1, 2] +
+    mp_T["Stand.age.at.T2", dbh_5_spec]*
+    (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
+    mp_T["Spruce.volume", dbh_5_spec]*
+    (ifelse(probability == "extinction", x$VolumeSpruce, log(max(x$VolumeSpruce, 1e-12))) - msd5[3, 1])/msd5[3, 2]
+  WDF10 <- mp_T["Intercept", ] +
+    mp_T["Dead.wood.volume", dbh_10_spec]*
+    (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd10[1, 1])/msd10[1, 2] +
+    mp_T["Stand.age.at.T2", dbh_10_spec]*
+    (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
+    mp_T["Spruce.volume", dbh_10_spec]*
+    (ifelse(probability == "extinction", x$VolumeSpruce, log(max(x$VolumeSpruce, 1e-12))) - msd5[3, 1])/msd5[3, 2]
   ## Because the Inf/-Inf values coming from the deterministic model parts 
   ## disappear during the predictions abive, we need to re-introduce them here
   ## with values from the original model parameter matrix:
   WDF <- c(WDF5, WDF10)[colnames(mp_T)] ## Make sure order of species is the same
   WDF[is.infinite(mp_T[1,])] <- mp_T[1, is.infinite(mp_T[1,])] ## Re-introduce Inf/-Inf
   # RpC <- ifelse(x$ret_patch == 1, 0.1, 1) ## Define ret_patch in d_cov before!
-  as.list(inv.logit(WDF)) ## Multiply also with RpC once added above!
+  as.list(if(probability == "colonization") clogloglink(WDF, inverse = TRUE) else inv.logit(WDF)) ## Multiply also with RpC once added above!
 }
 
-## Predict initial state WDF data:
-dci_pred <- dc_init[, pred_init(.SD), by = 1:nrow(dc_init)]
+## 4. Predict occupancy, colonisation, and extinction --------------------------
 
-## Combine with original data:
+## Initial state Heureka data, model parameters, and Mean & SD:
+dc_init <- d_cov[d_cov$ControlCategoryName == "Initial state", ]
+mp_red <- mp[mp$probability == "start", ]
+msd_red <- as.data.table(mean_sd[mean_sd$Model.component == "colonization", ])
+## Predict initial state WDF data and combine with unique ID data:
+dci_pred <- dc_init[, pred_prob(.SD, "start"), by = 1:nrow(dc_init)]
 dci_pred <- cbind(dc_init[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
                   dci_pred[, -1])
 
+## Colonisation Heureka data, model parameters, and Mean & SD:
+dc_col <- d_cov[d_cov$ControlCategoryName != "Initial state", ]
+mp_red <- mp[mp$probability == "colonization", ]
+msd_red <- as.data.table(mean_sd[mean_sd$Model.component == "colonization", ])
+## Predict colonization state WDF data and combine with unique ID data:
+dcc_pred <- dc_col[, pred_prob(.SD, "colonization"), by = 1:nrow(dc_col)]
+dcc_pred <- cbind(dc_col[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
+                  dcc_pred[, -1])
 
+## Colonisation Heureka data, model parameters, and Mean & SD:
+dc_ext <- d_cov[d_cov$ControlCategoryName != "Initial state", ]
+mp_red <- mp[mp$probability == "extinction", ]
+msd_red <- as.data.table(mean_sd[mean_sd$Model.component == "extinction", ])
+## Predict extinction state WDF data and combine with unique ID data:
+dce_pred <- dc_ext[, pred_prob(.SD, "extinction"), by = 1:nrow(dc_ext)]
+dce_pred <- cbind(dc_ext[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
+                  dce_pred[, -1])
 
-## Ask helen how she dealt with the minimum diameters and Heureka data !!!!!!!!!
-## In the text: 
-## T. abietinum, G. sepiarium and P. viticola 5cm data
-## All others 10 cm data
-## Correct ?????????????????????????
+## 5. Predict occupancy according to colonisation - extinction dynamics --------
 
+## The dynamic occupancy model function:
+pred_dyn <- function(x){
+  dyn_M[1, ] <- as.matrix((1 - dci_pred[dci_pred$Description %in% x$NFI, ..spec])*
+                          x[x$probability == "col" & x$period == 1, ..spec] +
+                          dci_pred[dci_pred$Description %in% x$NFI, ..spec]*
+                          (1 - x[x$probability == "ext" & x$period == 1, ..spec]))
+  for(i in 2:max(x$period)){
+    dyn_M[i, ] <- as.matrix((1 - dyn_M[i-1, ])*
+                            x[x$probability == "col" & x$period == i, ..spec] +
+                            dyn_M[i-1, ]*
+                            (1 - x[x$probability == "ext" & x$period == i, ..spec]))
+  }
+  out <- cbind(1:i, dyn_M)
+  colnames(out) <- c("period", spec)
+  return(apply(out, 2, as.list))
+}
 
-
-
-
-
-
-
+## Combine colonisation and extinction data to calculate dynamics:
+dcc_pred$probability <- "col"
+dce_pred$probability <- "ext"
+dcce <- rbind(dcc_pred, dce_pred)
+dcce$NFI <- dcce$Description ## NFI id needed for identifying correct initial state
   
-## 5. Create output data -------------------------------------------------------
-
-out <- cbind(d_cov[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                   d_pred[,-1])
-
-write.csv(out, paste0("clean/MFO_WDF_", climate, ".csv"), row.names = FALSE)
+spec <- c(dbh_5_spec, dbh_10_spec)
+dyn_M <- matrix(NA, max(d_cov$period), length(spec))
+dcce_pred <- dcce[, pred_dyn(.SD), by = c("Description", "AlternativeNo", "ControlCategoryName")]  
   
+## 6. Create output data -------------------------------------------------------
+
+## Combine colonisation-extinction predictions with original initial status:
+out <- rbind(dci_pred, dcce_pred)
+
+fwrite(out, "clean/MFO_WDF_Moor.csv", row.names = FALSE)
+
+end <- Sys.time()
+
+end-start
+
 ## -------------------------------END-------------------------------------------
+
