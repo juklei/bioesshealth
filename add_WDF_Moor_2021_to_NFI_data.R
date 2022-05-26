@@ -12,40 +12,9 @@
 ## J Ecol. 2021;109:491-503. https://doi.org/10.1111/1365-2745.13526
 ##
 ## First edit: 2022-05-19 
-## Last edit: 
+## Last edit: 2022-05-25
 ##
 ## Author: Julian Klein
-
-
-### to do:
-
-## Use Fig. S4 to see which models are used for which forest age
-## Use table S4 to standardise the variables coming from HEureka:
-## How to handle the minimum deadwood diameters? Use mean?
-
-## Use table S5 to define occupancy at period = 0
-## Use table S6 to define extinction / colonization probability and with the 
-## formula above the occupancy at timestep period = 1:20
-## Use inv.logit() to calculate p_ext & p_occ and inv.cloglog for p_col
-
-
-## Question: IN the stakeholder manuscript it was downed dead wood volume spruce, 
-## here it is just dead wood volume: Clarify by reading the main text!
-
-
-
-## Now same procedure as with the other scripts:
-
-## 1) Create 3 model parameter matrices, one for occupancy t0, one for p_col and one for p_ext
-## 2) Standardize the Heureka variables
-## 3) make function with 0:1 values for every part of the calculation and multiply
-
-## Check if the retention patch division with 10 is also necessary here
-
-
-
-
-
 
 ## 1. Clear environment, load libraries, and data ------------------------------
 
@@ -76,7 +45,7 @@ d_cov <- fread(paste0(dir, "/data/MultiForestResults210704_20Periods_InclIntensi
                   sep = ";", blank.lines.skip = TRUE)
 
 ## Select random share of NFI plots:
-share <- 0.01
+share <- 0.001
 d_unique <- unique(d_cov$Description)
 select <- sample(d_unique, share*length(d_unique))
 d_cov <- d_cov[d_cov$Description %in% select, ]
@@ -123,7 +92,7 @@ pred_prob <- function(x, probability){
     (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
     mp_T["Spruce.volume", dbh_5_spec]*
     (ifelse(probability == "extinction", x$VolumeSpruce, log(max(x$VolumeSpruce, 1e-12))) - msd5[3, 1])/msd5[3, 2]
-  WDF10 <- mp_T["Intercept", ] +
+  WDF10 <- mp_T["Intercept", dbh_10_spec] +
     mp_T["Dead.wood.volume", dbh_10_spec]*
     (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd10[1, 1])/msd10[1, 2] +
     mp_T["Stand.age.at.T2", dbh_10_spec]*
@@ -206,7 +175,14 @@ fwrite(out, "clean/MFO_WDF_Moor.csv", row.names = FALSE)
 
 end <- Sys.time()
 
-end-start
+end-start ## 35min for 1%
 
 ## -------------------------------END-------------------------------------------
 
+## Merge with forest age to check correlations:
+trial <- merge(as.data.frame(out), d_cov, by = c("period", "Description", "AlternativeNo", "ControlCategoryName"))
+plot(as.numeric(trial$`A. lapponica`) ~ log(trial$Age))
+plot(as.numeric(trial$`A. lapponica`) ~ log(trial$VolumeSpruce))
+plot(as.numeric(trial$`A. lapponica`) ~ log(trial$DeadWoodVolumeSpruce))
+
+mp[, c("variable", "A. lapponica")] ## Should increase with Age and DW

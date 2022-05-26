@@ -56,7 +56,9 @@ d_cov <- fread(paste0(dir, "/data/", file),
                           "Age", "VolumeSpruce", "DeadWoodVolumeSpruce"), 
                   sep = ";", blank.lines.skip = TRUE)
 
-d_cov <- d_cov[d_cov$period == 0,] ## REDUCED SIZE FOR TRIAL !!!!!!!!!!!!!!!!!!!
+d_cov <- d_cov[d_cov$Description == out$Description & ## out => From Moor et al. to compare
+                 d_cov$AlternativeNo == out$AlternativeNo &
+                 d_cov$ControlCategoryName == out$ControlCategoryName,] ## REDUCED SIZE FOR TRIAL !!!!!!!!!!!!!!!!!!!
 
 ## 2. Add climate data to d_cov ------------------------------------------------
 
@@ -139,7 +141,7 @@ pred_WDF <- function(x){
                      mp["z.ald_max.z.gran_max", ]*x$Age_std*x$VS_std +
                      # mp["z.temp", ]*x$temp_std +
                      # mp["z.ald_max.z.tempann..09juli2020.", ]*x$Age_std*x$temp_std +
-                     # mp["z.precsummjjason", ]*x$precip_std + 
+                     mp["z.precsummjjason", ]*x$precip_std +
                      # mp["z.tempann.z.precsummjjason", ]*x$temp_std*x$precip_std +
                      # mp["z.ald_max.z.tempann..09juli2020.", ]*x$Age_std*x$temp_std +
                      mp["z.swe_twi", ]*x$wet_std
