@@ -44,7 +44,7 @@ climate <- "RCP0"
 # climate <- "RCP85"
 
 ## Select same random share of NFI plots for trial calculations:
-NFI_share <- 0.001
+NFI_share <- 0.0001
 
 ## Define period 0 year in Heureka:
 period_0 <- 2010
@@ -179,6 +179,7 @@ HK <- c(
 ## Run all ESS & BD scripts:
 source("scripts/select_Heureka_variables.r")
 source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
+source("scripts/add_WDF_Moor_2021_to_NFI_data.r")
 source("scripts/add_bryophytes_Lobel_2021_to_NFI_data.r")
 
 ## Combine all ESS & BD output data sets with original heureka data:

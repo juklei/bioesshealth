@@ -41,7 +41,7 @@ md_orig <- structure(c(142.801650760898, 105.766835314708, 106.486652050555,
                        34.3372729850402, 3.80210300749865, 2.55693671224763, 178.42886483205, 
                        34.6229068311015, 48.4663285970236, 129.004375157319), 
                      .Dim = c(2L, 5L), 
-                     .Dimnames = list(c("mean", "SD"), 
+                     .Dimnames = list(c("Mean", "SD"), 
                                       c("gran_max", "ald_max", "tempann", 
                                         "precsumson", "swe_twi")))
 
@@ -124,11 +124,11 @@ scale <- function(x, covariate){
 
 ## Scale Heureka variables with mean and SDs from original model data: 
 ## Verfiy with Louise Mair that centering was used!!! refit models using only scaled and both and evaluate parameters
-d_cov$VS_sc <- (d_cov$VolumeSpruce - md_orig["mean", "gran_max"])/md_orig["SD", "gran_max"]
-d_cov$Age_sc <- (d_cov$Age - md_orig["mean", "ald_max"])/md_orig["SD", "ald_max"]
-# d_cov$temp_sc <- (d_cov$meantempann - md_orig["mean", "tempann"])/md_orig["SD", "tempann"]
-d_cov$precip_sc <- (d_cov$precsumamjjason - md_orig["mean", "precsumson"])/md_orig["SD", "precsumson"]
-d_cov$wet_sc <- (d_cov$swe_twi_wetness - md_orig["mean", "swe_twi"])/md_orig["SD", "swe_twi"]
+d_cov$VS_sc <- scale("VolumeSpruce", "gran_max")
+d_cov$Age_sc <- scale("Age", "ald_max")
+# d_cov$temp_sc <- scale("meantempann", "tempann")
+d_cov$precip_sc <- scale("precsumamjjason", "precsumson")
+d_cov$wet_sc <- scale("swe_twi_wetness", "swe_twi")
 
 ## Check if min_age and mp have same name order:
 if(!all(dimnames(mp)[[2]] == names(min_age))) stop("species names not matching")
