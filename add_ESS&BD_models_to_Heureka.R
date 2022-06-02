@@ -25,6 +25,7 @@ start <- Sys.time()
 rm(list = ls())
 
 library(data.table)
+library(ggplot2)
 library(boot)
 library(VGAM)
 
@@ -44,7 +45,7 @@ climate <- "RCP0"
 # climate <- "RCP85"
 
 ## Select same random share of NFI plots for trial calculations:
-NFI_share <- 0.0001
+NFI_share <- 0.001
 
 ## Define period 0 year in Heureka:
 period_0 <- 2010
@@ -181,9 +182,10 @@ source("scripts/select_Heureka_variables.r")
 source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
 source("scripts/add_WDF_Moor_2021_to_NFI_data.r")
 source("scripts/add_bryophytes_Lobel_2021_to_NFI_data.r")
+source("scripts/add_ESS_Mazziotta_2022_to_NFI_data.r")
 
 ## Combine all ESS & BD output data sets with original heureka data:
-df_list <- list(d_HK, out_Mair, out_Lobel)
+df_list <- list(d_HK, out_Mair, out_Moor, out_Mazziotta, out_Lobel)
 out <- Reduce(function(x, y){
   merge(x, y, all=TRUE, by = c("Description", "period", "AlternativeNo", "ControlCategoryName"))
   },
@@ -195,6 +197,5 @@ fwrite(out, paste0(dir_HK, "MFO_results_ESS&BD_added_", climate, ".csv"))
 ## -------------------------------END-------------------------------------------
 
 end <- Sys.time()
-end-start ## 35min for 1%
-
+end-start 
 

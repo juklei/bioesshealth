@@ -236,9 +236,10 @@ pred_dyn <- function(x){
                             dyn_M[i-1, ]*
                             (1 - x[x$probability == "ext" & x$period == i, ..spec]))
   }
+  
   out <- cbind(1:i, dyn_M)
   colnames(out) <- c("period", spec)
-  return(apply(out, 2, as.list))
+  return(as.data.table(out))
 }
 
 ## Combine colonisation and extinction data to calculate dynamics:
