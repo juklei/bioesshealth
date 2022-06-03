@@ -68,11 +68,8 @@ WDF <- c(
   )
 
 ## Lichens:
-LP <- "L. pulmonaria"
-RL <- c( ## Reindeer model to be introduced....
-  # "Cladonia...", 
-  # "Alectoria..."
-  ) 
+# LP <- "L. pulmonaria" ## Do not see how to implement it at the moment
+RL <- "B. fuscescens" 
 
 ## Birds:
 Birds <- c(
@@ -183,9 +180,10 @@ source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
 source("scripts/add_WDF_Moor_2021_to_NFI_data.r")
 source("scripts/add_bryophytes_Lobel_2021_to_NFI_data.r")
 source("scripts/add_ESS_Mazziotta_2022_to_NFI_data.r")
+source("scripts/add_BF_Horstkotte_2011_to_NFI_data.R")
 
 ## Combine all ESS & BD output data sets with original heureka data:
-df_list <- list(d_HK, out_Mair, out_Moor, out_Mazziotta, out_Lobel)
+df_list <- list(d_HK, out_Mair, out_Moor, out_Mazziotta, out_Lobel, out_Horstkotte)
 out <- Reduce(function(x, y){
   merge(x, y, all=TRUE, by = c("Description", "period", "AlternativeNo", "ControlCategoryName"))
   },
