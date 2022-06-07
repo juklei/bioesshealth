@@ -13,7 +13,7 @@
 ## ACTIVATE/DEACTIVATE ROWS WITH Ctrl/Cmd + shift + C
 ##
 ## First edit: 2022-05-26
-## Last edit: 2022-06-01
+## Last edit: 2022-06-07
 ##
 ## Author: Julian Klein
 
@@ -43,7 +43,6 @@ NFI_ESS <- read.csv("data/NFI_Mazziotta_et_al_2022.csv")
 climate <- "RCP0"
 # climate <- "RCP45"
 # climate <- "RCP85"
-
 ## Select same random share of NFI plots for trial calculations:
 NFI_share <- 0.001
 

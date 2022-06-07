@@ -166,8 +166,12 @@ names(d_pred)[names(d_pred) == "phefer"] <- "P. ferrugineofuscus"
 names(d_pred)[names(d_pred) == "phenig"] <- "P. nigrolimitatus" 
 names(d_pred)[names(d_pred) == "phlcen"] <- "P. centrifuga"
 
+## Select only WDF chosen in the main script and add Mair to the names:
+d_pred <- d_pred[, colnames(d_pred) %in% WDF, with = FALSE]
+colnames(d_pred) <- paste(colnames(d_pred), "Mair")
+
 ## Combine selected wood-decaying fungi with original Heureka data:
 out_Mair <- cbind(d_cov[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                  d_pred[, colnames(d_pred) %in% WDF, with = FALSE])
+                  d_pred)
 
 ## -------------------------------END-------------------------------------------

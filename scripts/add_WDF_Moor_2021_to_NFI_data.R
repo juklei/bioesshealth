@@ -257,8 +257,10 @@ dcce_pred <- dcce[, pred_dyn(.SD), by = c("Description", "AlternativeNo", "Contr
 ## Combine colonisation-extinction predictions with original initial status:
 d_pred <- rbind(dci_pred, dcce_pred)
 
-## Select wood-decaying fungi to export:
-out_Moor <- d_pred[, colnames(d_pred) %in% c(WDF, "period", "Description", "AlternativeNo", "ControlCategoryName"), with = FALSE]
+## Select wood-decaying fungi to export and rename:
+d_pred[, colnames(d_pred) %in% c(WDF, "period", "Description", "AlternativeNo", "ControlCategoryName"), with = FALSE]
+colnames(d_pred)[5:length(d_pred)] <- paste(colnames(d_pred)[5:length(d_pred)], "Moor")
+out_Moor <- d_pred
 
 ## -------------------------------END-------------------------------------------
 
