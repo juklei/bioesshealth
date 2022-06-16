@@ -71,15 +71,17 @@ dens_birch <- 625
 
 ## 2. Load Heureka data --------------------------------------------------------
 
-if(climate == "RCP0") file <- paste0(dir_HK, file_RCP0)
-if(climate == "RCP45") file <- paste0(dir_HK, file_RCP45)
-if(climate == "RCP85") file <- paste0(dir_HK, file_RCP85)
+if(climate == "RCP0") file <- paste0(dir_HK, file_RCP0) ## Does not contain biomass
+if(climate == "RCP45") file <- paste0(dir_HK, file_RCP45) ## Contains biomass
+if(climate == "RCP85") file <- paste0(dir_HK, file_RCP85) ## Contains biomass
 
 d_cov <- fread(file,  
                select = c("Description", "period", "AlternativeNo", "ControlCategoryName", 
                           "Age", "VolumePine", "VolumeSpruce", "VolumeBirch",
+                          "BiomassBirch", "BiomassPine", "BiomassSpruce",
                           "Richness", "BilberryCover", "Wildfood"), ## Only for testing !!!
                sep = ";", blank.lines.skip = TRUE)
+d_cov$BiomassPine <- as.numeric(d_cov$BiomassPine) ## Should not be necessary. Check why NA!
 
 ## Select random share of NFI plots:
 d_unique <- unique(d_cov$Description)
@@ -91,10 +93,17 @@ d_cov <- d_cov[d_cov$Description %in% select, ]
 
 NFI <- NFI_ESS
 
-## The next three lines will become obsolete once biomass is available in Heureka
-d_cov$bmSpruce <- d_cov$VolumeSpruce*dens_spruce/10000 ## Mazziotta et al. used kg/m2
-d_cov$bmPine <- d_cov$VolumePine*dens_pine/10000
-d_cov$bmBirch <- d_cov$VolumeBirch*dens_birch/10000
+## The following code will become obsolete once biomass is available in Heureka
+## also for RCP0 and the scale of bm makes sense for RCP4.5 and 8.5
+if(climate == "RCP0"){
+  d_cov$BiomassSpruce <- d_cov$VolumeSpruce*dens_spruce/10000 ## Mazziotta et al. used kg/m2
+  d_cov$BiomassPine <- d_cov$VolumePine*dens_pine/10000
+  d_cov$BiomassBirch <- d_cov$VolumeBirch*dens_birch/10000
+} else { ## Biomass seems too high by factor 10!!!
+  d_cov$BiomassSpruce <- d_cov$BiomassSpruce/10
+  d_cov$BiomassPine <- d_cov$BiomassPine/10
+  d_cov$BiomassBirch <- d_cov$BiomassBirch/10
+}
 
 ## Add period 19 & 20 to the data: Discuss this step with Tord !!!!!!!!!!!!!!!!!
 ## For now I use period 1 for period 1 and period 18 for 19 & 20
@@ -105,7 +114,7 @@ NFI <- rbind(NFI, T1, T2)
 
 ## Merge Heureka with NFI data:
 colnames_clim <- paste0(c("psum_", "tsum_"), 
-                        ifelse(climate == "RCP0", "CC", climate))
+                        ifelse(climate == "RCP0", "CC", sub("5", ".5", climate)))
 d_cov <- merge(d_cov, 
                NFI[, c("Description", "PERIOD", "SoilMoist", "SoilMoist.cont",
                        "region2", "peat", "join_eps", colnames_clim)],
@@ -129,14 +138,14 @@ pred_ESS <- function(x){
           mp["stand age", ]*(x$Age-x$age.mean)/x$age.sd +
           mp["soil moisture", ]*(x$SoilMoist-x$Smoist.mean)/x$Smoist.sd + ## Cont or integer?
           mp["peat soil (Y/N)", ]*(x$peat-x$peat.mean)/x$peat.sd + ## Standardising a categorical variable is strange to me?
-          mp["spruce biomass", ]*(x$bmSpruce-x$spruce.mean)/x$spruce.sd +
-          mp["pine biomass", ]*(x$bmPine-x$pine.mean)/x$pine.sd +
-          mp["birch biomass", ]*(x$bmBirch-x$birch.mean)/x$birch.sd +
+          mp["spruce biomass", ]*(x$BiomassSpruce-x$spruce.mean)/x$spruce.sd +
+          mp["pine biomass", ]*(x$BiomassPine-x$pine.mean)/x$pine.sd +
+          mp["birch biomass", ]*(x$BiomassBirch-x$birch.mean)/x$birch.sd +
           mp["stand age^2", ]*(x$Age^2-x$age2.mean)/x$age2.sd +
           mp["soil moisture^2", ]*(x$SoilMoist^2-x$Smoist2.mean)/x$Smoist2.sd + ## Cont or integer?
-          mp["spruce biomass * stand age", ]*(x$bmSpruce*x$Age-x$agexspruce.mean)/x$agexspruce.sd +
-          mp["pine biomass * stand age", ]*(x$bmPine*x$Age-x$agexpine.mean)/x$agexpine.sd +
-          mp["birch biomass * stand age", ]*(x$bmBirch*x$Age-x$agexbirch.mean)/x$agexbirch.sd
+          mp["spruce biomass * stand age", ]*(x$BiomassSpruce*x$Age-x$agexspruce.mean)/x$agexspruce.sd +
+          mp["pine biomass * stand age", ]*(x$BiomassPine*x$Age-x$agexpine.mean)/x$agexpine.sd +
+          mp["birch biomass * stand age", ]*(x$BiomassBirch*x$Age-x$agexbirch.mean)/x$agexbirch.sd
   as.list(c(inv.logit(ESS[c(1:2, 4)]), exp(ESS[3]))) ## Different link functions per column!
 }
 
@@ -159,9 +168,9 @@ out <- cbind(d_cov[, c("Description", "period", "AlternativeNo", "ControlCategor
 colnames(out)[c(5, 7)] <- c("Richness_old", "Wildfood_old")
 
 sel <- sample(nrow(out), 1000)
-ggplot(out[sel, ]) + geom_point(aes(Richness_old, Richness)) + geom_abline(slope = 1)
+ggplot(out[sel, ]) + geom_point(aes(as.numeric(Richness_old), Richness)) + geom_abline(slope = 1)
 ggplot(out[sel, ]) + geom_point(aes(Wildfood_old, Wildfood)) + geom_abline(slope = 1)
-ggplot(out[sel, ]) + geom_point(aes(BilberryCover, Bilberry.beta))  + geom_abline(slope = 1)
+ggplot(out[sel, ]) + geom_point(aes(as.numeric(BilberryCover), Bilberry.beta))  + geom_abline(slope = 1)
 
 ## Wood densities seem ok and the biomass variables are in kg/m2: Now we need actually 
 ## used wood densities or preferrably data directly from Heureka: 

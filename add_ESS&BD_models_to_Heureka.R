@@ -40,9 +40,9 @@ NFI_BP <- read.csv("data/NFI_Loebel_et_al_2021.csv")
 NFI_ESS <- read.csv("data/NFI_Mazziotta_et_al_2022.csv")
 
 ## Chose climate scenario:
-climate <- "RCP0"
+# climate <- "RCP0"
 # climate <- "RCP45"
-# climate <- "RCP85"
+climate <- "RCP85"
 ## Select same random share of NFI plots for trial calculations:
 NFI_share <- 0.001
 
@@ -187,6 +187,9 @@ out <- Reduce(function(x, y){
   merge(x, y, all=TRUE, by = c("Description", "period", "AlternativeNo", "ControlCategoryName"))
   },
   df_list)
+
+## Remove plot 200820124152 with Int_prod from data: It has very weird data:
+d_cov <- droplevels(d_cov[!(d_cov$Description == "200820124152" & d_cov$ControlCategoryName == "Int_Prod"), ])
 
 ## Export to same directory where original Heureka data is stored:
 fwrite(out, paste0(dir_HK, "MFO_results_ESS&BD_added_", climate, ".csv"))
