@@ -45,7 +45,7 @@ climate <- "RCP45"
 # climate <- "RCP85"
 
 ## Select same random share of NFI plots for trial calculations:
-NFI_share <- 1
+NFI_share <- 0.001
 
 ## Define period 0 year in Heureka:
 period_0 <- 2010
@@ -54,8 +54,8 @@ period_0 <- 2010
 
 ## Wood-decaying fungi:
 WDF <- c(
-  "A. serialis", 
-  "F. pinicola", 
+  # "A. serialis", 
+  # "F. pinicola",
   "F. rosea", 
   "P. centrifuga",
   "P. ferrugineofuscus", 
@@ -174,7 +174,7 @@ HK <- c(
   
 ## 4. Run model functions and export data set ----------------------------------
 
-## Run all ESS & BD scripts:
+## Chose and run ESS & BD scripts:
 source("scripts/select_Heureka_variables.r")
 # source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
 source("scripts/add_WDF_Moor_2021_to_NFI_data.r")
@@ -183,7 +183,9 @@ source("scripts/add_ESS_Mazziotta_2022_to_NFI_data.r")
 source("scripts/add_BF_Horstkotte_2011_to_NFI_data.R")
 
 ## Combine all ESS & BD output data sets with original heureka data:
-df_list <- list(d_HK, out_Mair, out_Moor, out_Mazziotta, out_Lobel, out_Horstkotte)
+df_list <- ls()[ls() %in% c("d_HK", "out_Mair", "out_Lobel", "out_Moor", "out_Mazziotta", 
+                            "out_Horstkotte")] ## Select only existing objects!
+df_list <- sapply(df_list, get)
 out <- Reduce(function(x, y){
   merge(x, y, all=TRUE, by = c("Description", "period", "AlternativeNo", "ControlCategoryName"))
   },
