@@ -140,6 +140,11 @@ dbh_5_spec <- c("T. abietinum", "G. sepiarium", "P. viticola")
 dbh_10_spec <- c("A. lapponica", "A. serialis", "F. pinicola", "F. rosea", 
                  "P. centrifuga", "P. ferrugineofuscus", "P. nigrolimitatus")
 
+## 1.2. Reduce all information to selected WDF --------------------------------- 
+mp <- mp[, c("Stand.age.group.min", "Stand.age.group.max", "probability", "variable", WDF)]
+dbh_5_spec <- dbh_5_spec[dbh_5_spec %in% WDF]
+dbh_10_spec <- dbh_10_spec[dbh_10_spec %in% WDF]
+
 ## 2. Load Heureka data --------------------------------------------------------
 
 if(climate == "RCP0") file <- paste0(dir_HK, file_RCP0)
@@ -257,7 +262,7 @@ dcce_pred <- dcce[, pred_dyn(.SD), by = c("Description", "AlternativeNo", "Contr
 ## Combine colonisation-extinction predictions with original initial status:
 d_pred <- rbind(dci_pred, dcce_pred)
 
-## Select wood-decaying fungi to export and rename:
+## Select wood-decaying fungi again to export and rename:
 d_pred[, colnames(d_pred) %in% c(WDF, "period", "Description", "AlternativeNo", "ControlCategoryName"), with = FALSE]
 colnames(d_pred)[5:length(d_pred)] <- paste(colnames(d_pred)[5:length(d_pred)], "Moor")
 out_Moor <- d_pred

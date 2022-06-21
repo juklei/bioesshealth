@@ -1,0 +1,29 @@
+Summary of missing parts in adding the models to the Heureka data:
+
+Mair et al. 2018, Loebel et al. 2021, Mazziotta et al. 2022:
+Only 18 periods. No period 0 and no period 19and 20.
+
+Mair et al. 2018:
+How do we know when a stand contains a certain area of retention patches where we need to reduce predictions by factor 10?
+Annual mean temperature for NFI plots missing
+Precipitation and wetness also missing but I use the data provided for the bryophytes
+
+Loebel et al. 2021:
+How do we know when a stand contains a certain area of retention patches where we need to reduce predictions by factor 10?
+
+Mazziotta et al. 2022:
+Wood densities seem ok and the biomass variables are in kg/m2: Now we need actually used wood densities or preferrably data directly from Heureka:
+"Biomass Above Ground All Species" https://www.heurekaslu.se/wiki/Biomass_Results
+New Heureka runs or manual calculation for all parts of the tree?
+We should get the functions from Adriano in this case!
+Or extract here_ https://www.heurekaslu.se/wiki/Biomass_functions
+Functions used here are: 
+Marklund, L. G. Biomass Functions for Pine, Spruce and Birch in Sweden (Department of Forest Survey, SLU, 1988). 
+Petersson, H. & Ståhl, G. Functions for Below-Ground Biomass of Pinus Sylvestris, Picea Abies, Betula Pendula and Betula Pubescens in Sweden (Department of Forest Resource Management and Geomatics, SLU (2006).
+
+Moor et al. 2021:
+T. abietinum, G. sepiarium and P. viticola with mean/SD data from 5cm? And all others with 10cm DBH data? Does Heureka have a cutoff?
+log(DeadWoodVolumeSpruce = 0) = Inf...NaN -> I solve it by using max(x$DWV, 1e-12)
+In the stakeholder manuscript it was downed dead wood volume spruce, here it is just dead wood volume: Clarify by reading the main text!
+Check if the retention patch division with 10 is also necessary here
+

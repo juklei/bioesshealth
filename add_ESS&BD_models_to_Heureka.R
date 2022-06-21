@@ -41,10 +41,11 @@ NFI_ESS <- read.csv("data/NFI_Mazziotta_et_al_2022.csv")
 
 ## Chose climate scenario:
 # climate <- "RCP0"
-# climate <- "RCP45"
-climate <- "RCP85"
+climate <- "RCP45"
+# climate <- "RCP85"
+
 ## Select same random share of NFI plots for trial calculations:
-NFI_share <- 0.001
+NFI_share <- 1
 
 ## Define period 0 year in Heureka:
 period_0 <- 2010
@@ -53,17 +54,17 @@ period_0 <- 2010
 
 ## Wood-decaying fungi:
 WDF <- c(
-  "A. lapponica", 
   "A. serialis", 
   "F. pinicola", 
   "F. rosea", 
   "P. centrifuga",
   "P. ferrugineofuscus", 
   "P. nigrolimitatus", 
-  "T. abietinum", 
-  "G. sepiarium", 
-  "P. viticola",
-  "P. chrysoloma"
+  # "T. abietinum", 
+  # "G. sepiarium", 
+  # "P. viticola",
+  # "P. chrysoloma",
+  "A. lapponica"
   )
 
 ## Lichens:
@@ -71,44 +72,44 @@ WDF <- c(
 RL <- "B. fuscescens" 
 
 ## Birds:
-Birds <- c(
-  "T. bonasia",
-  "P. infaustus",
-  "P. cinctus",
-  "A. caudatus",
-  "F. parva",
-  "P. canus",
-  "D. minor",
-  "P. tridactylus"
-  )
+# Birds <- c(
+#   "T. bonasia",
+#   "P. infaustus",
+#   "P. cinctus",
+#   "A. caudatus",
+#   "F. parva",
+#   "P. canus",
+#   "D. minor",
+#   "P. tridactylus"
+#   )
 
 ## Bryophytes:
 BP <- c(
   "Ana.hell", 
-  "Ana.mich", 
+  # "Ana.mich", 
   "Bux.vir", 
-  "Cal.hald", 
-  "Cal.suec",
-  "Camp.som", 
-  "Ceph.cat", 
-  "Dicr.denu", 
-  "Dicr.flag", 
-  "Dicr.frag",
-  "Geo.grav", 
-  "Herz.sel", 
-  "Herz.tur", 
-  "Jam.aut", 
-  "Jung.lei", 
-  "Lo.asc",
-  "Lo.cil", 
-  "Lo.loflo", 
+  # "Cal.hald", 
+  # "Cal.suec",
+  # "Camp.som", 
+  # "Ceph.cat", 
+  # "Dicr.denu", 
+  # "Dicr.flag", 
+  # "Dicr.frag",
+  # "Geo.grav", 
+  # "Herz.sel", 
+  # "Herz.tur", 
+  # "Jam.aut", 
+  # "Jung.lei", 
+  # "Lo.asc",
+  # "Lo.cil", 
+  # "Lo.loflo", 
   "My.tay", 
-  "Now.cur", 
-  "Od.denu", 
+  # "Now.cur", 
+  # "Od.denu", 
+  # "Sca.api.DistWater", 
+  # "Sca.car.DistWater",
   "Sca.api", 
-  "Sca.car", 
-  "Sca.api.DistWater", 
-  "Sca.car.DistWater"
+  "Sca.car"
   )
 
 ## Ecosystem services:
@@ -120,9 +121,9 @@ ESS <- c(
   )
 
 ## Beetles:
-BTL <- c(
-  # ...u
-  )
+# BTL <- c(
+#   # ...u
+#   )
 
 ##
 
@@ -140,12 +141,12 @@ HK <- c(
   # "NoOfStems", 
   # "Volume", 
   # "VolumeExclOverstory", 
-  # "VolumeDecidous", 
+  "VolumeDecidous",
   "SumVolumeCutTotal",
-  # "SumTimberVolumeTotal", 
-  # "SumPulpVolumeTotal", 
-  # "SumHarvestResiduesTotal",
-  # "SumHarvestFuelwoodTotal", 
+  "SumTimberVolumeTotal",
+  "SumPulpVolumeTotal",
+  "SumHarvestResiduesTotal",
+  "SumHarvestFuelwoodTotal",
   "AnnualIncrementNetTotal",
   "DeadWoodVolume", 
   # "DeadWoodVolumeSpruce", 
@@ -175,7 +176,7 @@ HK <- c(
 
 ## Run all ESS & BD scripts:
 source("scripts/select_Heureka_variables.r")
-source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
+# source("scripts/add_WDF_Mair_2018_to_NFI_data.r")
 source("scripts/add_WDF_Moor_2021_to_NFI_data.r")
 source("scripts/add_bryophytes_Lobel_2021_to_NFI_data.r")
 source("scripts/add_ESS_Mazziotta_2022_to_NFI_data.r")

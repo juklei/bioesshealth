@@ -125,6 +125,10 @@ md_orig <- structure(c(778.6012987, 823.2160753, 20.42284569, 55.50751564,
                                         "precsumamjjason", "slope", "slope.asp", 
                                         "swe_twi_wetness", "tall_max", "tempOctNov")))
 
+## 1.2. Reduce all information to selected Bryophytes -------------------------- 
+mp <- mp[, BP]
+min_age <- min_age[names(min_age) %in% BP]
+
 ## 2. Load Heureka data --------------------------------------------------------
 
 if(climate == "RCP0") file <- paste0(dir_HK, file_RCP0)

@@ -30,11 +30,14 @@ mp <- structure(c(-6.112, 0.596, 1.02, -0.348, -2.567, 0.84, 0.452, 0.393, 0, 0,
                                    "z.ald_max.z.tempann..09juli2020.", 
                                    "z.precsummjjason", "z.tempann.z.precsummjjason", 
                                    "z.gran_max.z.tempann", "z.swe_twi"), 
-                                 c("amylap", "fomros", "phechr", "phefer", 
-                                   "phenig", "phlcen")))
+                                 c("A. lapponica", "F. rosea", "P. chrysoloma", 
+                                   "P. ferrugineofuscus", "P. nigrolimitatus", 
+                                   "P. centrifuga")))
 
 ## From table S4.3
-min_age <- c(amylap = 87, fomros = 75, phechr = 64, phefer = 64, phenig = 76, phlcen = 83)
+min_age <- c("A. lapponica" = 87, "F. rosea" = 75, "P. chrysoloma" = 64, 
+             "P. ferrugineofuscus" = 64, "P. nigrolimitatus" = 76, 
+             "P. centrifuga" = 83)
 
 ## The mean and SDs from the original data:
 md_orig <- structure(c(142.801650760898, 105.766835314708, 106.486652050555, 
@@ -44,6 +47,10 @@ md_orig <- structure(c(142.801650760898, 105.766835314708, 106.486652050555,
                      .Dimnames = list(c("Mean", "SD"), 
                                       c("gran_max", "ald_max", "tempann", 
                                         "precsumson", "swe_twi")))
+
+## 1.2. Reduce all information to selected WDF --------------------------------- 
+mp <- mp[, colnames(mp) %in% WDF]
+min_age <- min_age[names(min_age) %in% WDF]
 
 ## 2. Load Heureka data --------------------------------------------------------
 
@@ -155,16 +162,6 @@ pred_WDF <- function(x){
 d_pred <- d_cov[, pred_WDF(.SD), by = 1:nrow(d_cov)]
   
 ## 5. Create output data -------------------------------------------------------
-
-## Which wood-decaying fungi should be exported?
-
-## Rename WDF to scientific names:
-names(d_pred)[names(d_pred) == "amylap"] <- "A. lapponica"
-names(d_pred)[names(d_pred) == "fomros"] <- "F. rosea"
-names(d_pred)[names(d_pred) == "phechr"] <- "P. chrysoloma"
-names(d_pred)[names(d_pred) == "phefer"] <- "P. ferrugineofuscus"
-names(d_pred)[names(d_pred) == "phenig"] <- "P. nigrolimitatus" 
-names(d_pred)[names(d_pred) == "phlcen"] <- "P. centrifuga"
 
 ## Select only WDF chosen in the main script and add Mair to the names:
 d_pred <- d_pred[, colnames(d_pred) %in% WDF, with = FALSE]
