@@ -15,7 +15,7 @@ if(climate == "RCP85") file <- paste0(dir_HK, file_RCP85)
 
 ## Always Heureka output:,
 presel <- c("Description", "period", "AlternativeNo", "RepresentedArea", 
-            "ControlCategoryName", "Region", "County", "reserve")
+            "ControlCategoryName", "Region", "County", "reserve", "Peat")
 
 ## Load Heureka data:
 d_HK <- fread(file, select = c(presel, HK), sep = ";", blank.lines.skip = TRUE)
