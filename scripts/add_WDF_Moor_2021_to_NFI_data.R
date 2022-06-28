@@ -12,89 +12,68 @@
 ## J Ecol. 2021;109:491-503. https://doi.org/10.1111/1365-2745.13526
 ##
 ## First edit: 2022-05-19 
-## Last edit: 2022-06-02
+## Last edit: 2022-06-28
 ##
 ## Author: Julian Klein
 
 rm(d_cov, mp, md_orig, dbh_5_spec, dbh_10_spec)
 
-## 1. Define model parameters, minimum age thresholds and mean&SD --------------
+## 1.1. Define model parameters, minimum age thresholds and mean&SD ------------
 
 ## The model parameters:
-mp <- structure(list(Stand.age.group.min = c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
-                                             0L, 0L, 0L, 21L, 21L, 21L, 21L, 21L, 
+mp <- structure(list(Stand.age.group.min = c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 21L, 
                                              21L, 21L, 21L, 21L, 21L, 21L, 21L, 
-                                             64L, 64L, 64L, 64L, 64L, 64L, 64L, 
-                                             64L, 64L, 64L, 64L, 64L), 
+                                             64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L), 
                      Stand.age.group.max = c(20L, 20L, 20L, 20L, 20L, 20L, 20L, 
-                                             20L, 20L, 20L, 20L, 20L, 63L, 63L, 
-                                             63L, 63L, 63L, 63L, 63L, 63L, 63L, 
-                                             63L, 63L, 63L, 1000L, 1000L, 1000L, 
-                                             1000L, 1000L, 1000L, 1000L, 1000L, 
+                                             20L, 63L, 63L, 63L, 63L, 63L, 63L, 
+                                             63L, 63L, 1000L, 1000L, 1000L, 1000L, 
                                              1000L, 1000L, 1000L, 1000L), 
-                     probability = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 
-                                               3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 
-                                               2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 
-                                               1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 
-                                               3L, 3L, 3L, 3L), 
+                     probability = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 
+                                               1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 
+                                               1L, 1L, 1L, 2L, 2L, 2L, 2L), 
                                              .Label = c("colonization", "extinction", "start"), 
                                              class = "factor"), 
-                     variable = structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 
-                                            2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 
+                     variable = structure(c(1L, 2L, 3L,4L, 1L, 2L, 3L, 4L, 1L, 2L, 
                                             3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 
-                                            4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), 
+                                            4L, 1L, 2L, 3L, 4L), 
                                           .Label = c("Intercept", "Dead.wood.volume", 
                                                      "Stand.age.at.T2", "Spruce.volume"), 
                                           class = "factor"), 
                      `A. lapponica` = c(-Inf, -Inf, -Inf, -Inf, Inf, Inf, Inf, 
-                                        Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 
-                                        -Inf, -Inf, Inf, Inf, Inf, Inf, -Inf, 
-                                        -Inf, -Inf, -Inf, -5.54, 2.3, 1.97, 0, 
-                                        -1.31, 0, 0, 0, -5.08, 2.38, 2.15, 0), 
-                     `A. serialis` = c(-0.55, 0, 0, 0, 0.45, 0, 0, 0, -0.76, 0, 
-                                        0, 0, -1.19, 3.52, 0, 0, -1.91, 0, 0, 0,
-                                       -0.27, 1.13, 0, 0, -1.19, 3.52, 0, 0, 
-                                       -1.91, 0, 0, 0, -0.27, 1.13, 0, 0), 
-                     `F. pinicola` = c(-4.83, 5.91, 0, 0, 0.94, 0, 0, 0, -1.36, 
-                                       0, 0, 0, 0.35, 2.07, 0, 0, -2.19, 0, 0, 
-                                       0, 0.54, 1.06, 0, 0, 0.35, 2.07, 0, 0, 
-                                       -2.19, 0, 0, 0, 0.54, 1.06, 0, 0), 
+                                        Inf, -Inf, -Inf, -Inf, -Inf, Inf, Inf, 
+                                        Inf, Inf, -5.54, 2.3, 1.97, 0, -1.31, 0, 0, 0), 
+                     `A. serialis` = c(-0.55, 0, 0, 0, 0.45, 0, 0, 0, -1.19, 3.52, 
+                                       0, 0, -1.91, 0, 0, 0, -1.19, 3.52, 0, 0, 
+                                       -1.91, 0, 0, 0), 
+                     `F. pinicola` = c(-4.83, 5.91, 0, 0, 0.94, 0, 0, 0, 0.35, 
+                                       2.07, 0, 0, -2.19, 0, 0, 0, 0.35, 2.07, 
+                                       0, 0, -2.19, 0, 0, 0), 
                      `F. rosea` = c(-Inf, -Inf, -Inf, -Inf, Inf, Inf, Inf, Inf, 
-                                    -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf,                                                                                                                                                                                                                                                                                          
-                                    -Inf, Inf, Inf, Inf, Inf, -Inf, -Inf, -Inf, 
-                                    -Inf, -4.17, 1.72, 1.77, 0, -1.27, 0, 0, 0, 
-                                    -4.05, 1.78, 1.98, 0), 
-                     `G. sepiarium` = c(5.3, 9.52, 0, 0, -1.48, 0, 0, 0, 0.58, 
-                                        0, 0, 0, -1.75, 0, 0, -1.31, 0.17, 0, 0, 
-                                        0, -1.35, 0, 0, -0.86, -1.75, 0, 0, 
-                                        -1.31, 0.17, 0, 0, 0, -1.35, 0, 0, -0.86), 
+                                    -Inf, -Inf, -Inf, -Inf, Inf, Inf, Inf, Inf, 
+                                    -4.17, 1.72, 1.77, 0, -1.27, 0, 0, 0), 
+                     `G. sepiarium` = c(5.3, 9.52, 0, 0, -1.48, 0, 0, 0, -1.75, 
+                                        0, 0, -1.31, 0.17, 0, 0, 0, -1.75, 0, 0, 
+                                        -1.31, 0.17, 0, 0, 0), 
                      `P. centrifuga` = c(-Inf, -Inf, -Inf, -Inf, Inf, Inf, Inf, 
-                                         Inf, -Inf, -Inf, -Inf, -Inf, -Inf, -Inf, 
-                                         -Inf, -Inf, Inf, Inf, Inf, Inf, -Inf, 
-                                         -Inf, -Inf, -Inf, -4.64, 2.99, 0, 0, 
-                                         -0.05, 0, 0, 0, -4.15, 2.76, 0, 0), 
+                                         Inf, -Inf, -Inf, -Inf, -Inf, Inf, Inf, 
+                                         Inf, Inf, -4.64, 2.99, 0, 0, -0.05, 0, 0, 0), 
                      `P. ferrugineofuscus` = c(-Inf, -Inf, -Inf, -Inf, Inf, Inf, 
                                                Inf, Inf, -Inf, -Inf, -Inf, -Inf, 
-                                               -Inf, -Inf, -Inf, -Inf, Inf, Inf, 
-                                               Inf, Inf, -Inf, -Inf, -Inf, -Inf, 
-                                               -2.69, 2.49, 4.05, 0, -1.88, 0, 
-                                               0, 0, -1.21, 1.01, 0.78, 0), 
+                                               Inf, Inf, Inf, Inf, -2.69, 2.49, 
+                                               4.05, 0, -1.88, 0, 0, 0), 
                      `P. nigrolimitatus` = c(-Inf, -Inf, -Inf, -Inf, Inf, Inf, 
                                              Inf, Inf, -Inf, -Inf, -Inf, -Inf, 
-                                             -Inf, -Inf, -Inf, -Inf, Inf, Inf, 
-                                             Inf, Inf, -Inf, -Inf, -Inf, -Inf, 
-                                             -9.02, 8.07, 4.37, 0, -2.02, -11.11, 
-                                             0, 0, -3.99, 3.78, 1.59, 0), 
-                     `P. viticola` = c(-7.8, 0, 8.07, 0, 0.46, 0, 0, 0, -1.64, 0, 
-                                       0, 0, -Inf, -Inf, -Inf, -Inf, Inf, Inf, 
-                                       Inf, Inf, -Inf, -Inf, -Inf, -Inf, -0.91, 
-                                       0.67, 0.64, 0, -3.91, -8.62, 0, 0, -0.52, 
-                                       0.78, 0.85, 0), 
-                     `T. abietinum` = c(-0.62, 0, 0, 0, -0.09, 0, 0, 0, -0.4, 0, 
-                                        0, 0, 7.13, 4.63, 0, 0, -2.72, 0, 0, 0, 
-                                        7.48, 4.18, 0, 0, 7.13, 4.63, 0, 0, 
-                                        -2.72, 0, 0, 0, 7.48, 4.18, 0, 0)), 
-                row.names = c(NA, -36L), 
+                                             Inf, Inf, Inf, Inf, -9.02, 8.07, 
+                                             4.37, 0, -2.02, -11.11, 0, 0), 
+                     `P. viticola` = c(-7.8, 0, 8.07, 0, 0.46, 0, 0, 0, -Inf, -Inf, 
+                                       -Inf, -Inf, Inf, Inf, Inf, Inf, -0.91, 
+                                       0.67, 0.64, 0, -3.91, -8.62, 0, 0), 
+                     `T. abietinum` = c(-0.62, 0, 0, 0, -0.09, 0, 0, 0, 7.13, 
+                                        4.63, 0, 0, -2.72, 0, 0, 0, 7.13, 4.63, 
+                                        0, 0, -2.72, 0, 0, 0)), 
+                row.names = c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 13L, 14L, 15L, 16L, 
+                              17L, 18L, 19L, 20L, 25L, 26L, 27L, 28L, 29L, 30L, 
+                              31L, 32L), 
                 class = "data.frame")
 
 ## The mean and SDs from the original data:
@@ -180,6 +159,7 @@ pred_prob <- function(x, probability){
     (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
     mp_T["Spruce.volume", dbh_5_spec]*
     (ifelse(probability == "extinction", x$VolumeSpruce, log(max(x$VolumeSpruce, 1e-12))) - msd5[3, 1])/msd5[3, 2]
+  names(WDF5) <- dbh_5_spec
   WDF10 <- mp_T["Intercept", dbh_10_spec] +
     mp_T["Dead.wood.volume", dbh_10_spec]*
     (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd10[1, 1])/msd10[1, 2] +
@@ -187,6 +167,7 @@ pred_prob <- function(x, probability){
     (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
     mp_T["Spruce.volume", dbh_10_spec]*
     (ifelse(probability == "extinction", x$VolumeSpruce, log(max(x$VolumeSpruce, 1e-12))) - msd5[3, 1])/msd5[3, 2]
+  names(WDF10) <- dbh_10_spec
   ## Because the Inf/-Inf values coming from the deterministic model parts 
   ## disappear during the predictions above, we need to re-introduce them here
   ## with values from the original model parameter matrix:
@@ -196,18 +177,34 @@ pred_prob <- function(x, probability){
   as.list(if(probability == "colonization") clogloglink(WDF, inverse = TRUE) else inv.logit(WDF)) ## Multiply also with RpC once added above!
 }
 
-## 4. Predict occupancy, colonisation, and extinction --------------------------
-
+## 4.1. Predict start occupancy with InitialState data -------------------------
+## Start values going into the colonisation extinction dynamics are the carrying 
+## capacity with InitialState data in Heureka as predictors. 
+## The carrying capacity is K = c/(c+e). 
+## From: solve(K = (1-K)*c+K(1-e), K)
 mp <- as.data.table(mp)
 
-## Initial state Heureka data, model parameters, and Mean & SD:
+## Initial state Heureka data:
 dc_init <- d_cov[d_cov$ControlCategoryName == "Initial state", ]
-mp_red <- mp[mp$probability == "start", ]
+
+## Predict colonization rate with period 0 data:
+mp_red <- mp[mp$probability == "colonization", ]
 msd_red <- as.data.table(md_orig[md_orig$Model.component == "colonization", ])
-## Predict initial state WDF data and combine with unique ID data:
-dci_pred <- dc_init[, pred_prob(.SD, "start"), by = 1:nrow(dc_init)]
-dci_pred <- cbind(dc_init[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                  dci_pred[, -1])
+dci_col <- dc_init[, pred_prob(.SD, "colonization"), by = 1:nrow(dc_init)]
+
+## Predict extinction rate with period 0 data:
+mp_red <- mp[mp$probability == "extinction", ]
+msd_red <- as.data.table(md_orig[md_orig$Model.component == "extinction", ])
+dci_ext <- dc_init[, pred_prob(.SD, "extinction"), by = 1:nrow(dc_init)]
+
+## Combine species names:
+spec <- c(dbh_5_spec, dbh_10_spec)
+
+## Calculate carrying capacity K = c/(c+e) for every NFI:
+d_K <- dci_col[, ..spec] / (dci_col[, ..spec] + dci_ext[, ..spec])
+d_K <- cbind(dc_init[, "Description"], as.data.table(d_K))
+
+## 4.2. Predict colonisation and extinction ------------------------------------
 
 ## Colonisation Heureka data, model parameters, and Mean & SD:
 dc_col <- d_cov[d_cov$ControlCategoryName != "Initial state", ]
@@ -231,9 +228,9 @@ dce_pred <- cbind(dc_ext[, c("Description", "period", "AlternativeNo", "ControlC
 
 ## The dynamic occupancy model function:
 pred_dyn <- function(x){
-  dyn_M[1, ] <- as.matrix((1 - dci_pred[dci_pred$Description %in% x$NFI, ..spec])*
+  dyn_M[1, ] <- as.matrix((1 - d_K[d_K$Description %in% x$NFI, ..spec])*
                           x[x$probability == "col" & x$period == 1, ..spec] +
-                          dci_pred[dci_pred$Description %in% x$NFI, ..spec]*
+                            d_K[d_K$Description %in% x$NFI, ..spec]*
                           (1 - x[x$probability == "ext" & x$period == 1, ..spec]))
   for(i in 2:max(x$period)){
     dyn_M[i, ] <- as.matrix((1 - dyn_M[i-1, ])*
