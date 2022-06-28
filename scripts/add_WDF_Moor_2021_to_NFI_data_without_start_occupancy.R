@@ -11,6 +11,11 @@
 ## specialist wood-decaying fungi. 
 ## J Ecol. 2021;109:491-503. https://doi.org/10.1111/1365-2745.13526
 ##
+## Additional Info: Start values going into the colonisation extinction dynamics 
+##                  are the carrying capacity with InitialState data in Heureka
+##                  as predictors. The carrying capacity is K = c/(c+e). 
+##                  From: solve(K = (1-K)*c+K(1-e), K)
+##
 ## First edit: 2022-05-19 
 ## Last edit: 2022-06-02
 ##
@@ -190,22 +195,20 @@ dc_init <- d_cov[d_cov$ControlCategoryName == "Initial state", ]
 mp_red <- mp[mp$probability == "colonization", ]
 msd_red <- as.data.table(md_orig[md_orig$Model.component == "colonization", ])
 dci_col <- dc_init[, pred_prob(.SD, "colonization"), by = 1:nrow(dc_init)]
-dci_col <- cbind(dc_init[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                  dci_col[, -1])
+dci_col <- cbind(dc_init[, "Description"], dci_col[, -1])
 
 ## Predict extinction rate with period 0 data:
 mp_red <- mp[mp$probability == "extinction", ]
 msd_red <- as.data.table(md_orig[md_orig$Model.component == "extinction", ])
 dci_ext <- dc_init[, pred_prob(.SD, "extinction"), by = 1:nrow(dc_init)]
-dci_ext <- cbind(dc_init[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                 dci_ext[, -1])
+dci_ext <- cbind(dc_init[, "Description"], dci_ext[, -1])
 
-## Now run the coloniation function for N times with the dynamic occupancy model
+## Now run the colonisation function for N times with the dynamic occupancy model
 ## function:
 pred_dyn_init <- function(x, N){
-  dyn_M[1, ] <- as.matrix((1 - x[x$probability == "col", ..spec]) *
+  dyn_M[1, ] <- as.matrix((1 - d_K[d_K$Description %in% x$NFI, ..spec]) * #x[x$probability == "col", ..spec]) *
                             x[x$probability == "col", ..spec] +
-                            x[x$probability == "col", ..spec] *
+                            d_K[d_K$Description %in% x$NFI, ..spec] * #x[x$probability == "col", ..spec] *
                             (1 - x[x$probability == "ext", ..spec]))
   for(i in 2:N){
     dyn_M[i, ] <- as.matrix((1 - dyn_M[i-1, ]) * x[x$probability == "col", ..spec] +
@@ -221,32 +224,39 @@ pred_dyn_init <- function(x, N){
 dci_col$probability <- "col"
 dci_ext$probability <- "ext"
 dcice <- rbind(dci_col, dci_ext)
+dcice$NFI <- dcice$Description ## NFI id needed for identifying correct initial state
 
 ## Combine species names:
 spec <- c(dbh_5_spec, dbh_10_spec)
 
+## Calculate mean carrying capacity K = c/(c+e):
+d_K <- dci_col[, ..spec] / (dci_col[, ..spec] + dci_ext[, ..spec])
+d_K <- cbind(dc_init[, "Description"], as.data.table(d_K))
+
 ## Define dummy runs and run:
-dummy_N <- 100
+dummy_N <- 10
 dyn_M <- matrix(NA, dummy_N, length(spec))
 dci_pred <- dcice[, pred_dyn_init(.SD, dummy_N), "Description"]  
 
-# ## Make figure with the development of occupancy with the dummy period:
-# library(ggplot2)
-# d_test_fig_all <- melt(dci_pred, measure.vars = spec)
-# G1 <- ggplot(d_test_fig_all, aes(dummy_period, value)) + 
-#   geom_line(aes(group = Description), size = 1) +
-#   facet_grid(. ~ variable) + 
-#   theme_light(15) + xlab("dummy periods") +  ylab("occupancy") + 
-#   guides(NULL)
-# d_test_fig_red <- d_test_fig_all[, list("mean" = mean(value)), by = c("dummy_period", "variable")]
-# G2 <- ggplot(d_test_fig_red, aes(dummy_period, mean, colour = variable)) + 
-#   geom_line(size = 1) +
-#   theme_light(15) + xlab("dummy periods") +  ylab("occupancy")
-# 
-# pdf("dummy_runs_10prc.pdf", width = 10)
-# G1
-# G2
-# dev.off()
+## Make figure with the development of occupancy with the dummy period:
+library(ggplot2)
+d_test_fig_all <- melt(dci_pred, measure.vars = spec)
+G1 <- ggplot(d_test_fig_all, aes(dummy_period, value)) +
+  geom_line(aes(group = Description), size = 1) +
+  facet_grid(. ~ variable) +
+  theme_light(15) + xlab("dummy periods") +  ylab("occupancy") +
+  guides(NULL)
+d_test_fig_red <- d_test_fig_all[, list("mean" = mean(value)), by = c("dummy_period", "variable")]
+# d_test_fig_red <- merge(d_test_fig_red, melt(d_K), by.x = "variable", by.y = "L1")
+G2 <- ggplot(d_test_fig_red, aes(dummy_period, mean, colour = variable)) +
+  geom_line(size = 1) +
+  # geom_hline(data = melt(d_K), aes(yintercept = value, colour = L1)) +
+  theme_light(15) + xlab("dummy periods") +  ylab("occupancy")
+
+pdf("dummy_runs_10prc.pdf", width = 15)
+G1
+G2
+dev.off()
 
 ## Store the final run as initial state for the real run:
 dcip_fin <- dci_pred[dci_pred$dummy_period == max(dci_pred$dummy_period), ]
