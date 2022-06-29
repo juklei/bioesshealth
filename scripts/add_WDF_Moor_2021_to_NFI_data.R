@@ -114,6 +114,8 @@ md_orig <- structure(list(Variable = structure(c(1L, 1L, 1L, 1L, 5L, 5L, 5L, 5L,
                      class = "data.frame", 
                      row.names = c(NA, -24L))
 
+## Reduce to species found in Moor et al 2021:
+WDF <- WDF[WDF != "P. chrysoloma"]
 ## Which species use the model mean and SD for diameter >= 5cm?
 dbh_5_spec <- c("T. abietinum", "G. sepiarium", "P. viticola")
 dbh_10_spec <- c("A. lapponica", "A. serialis", "F. pinicola", "F. rosea", 
@@ -202,7 +204,8 @@ spec <- c(dbh_5_spec, dbh_10_spec)
 
 ## Calculate carrying capacity K = c/(c+e) for every NFI:
 d_K <- dci_col[, ..spec] / (dci_col[, ..spec] + dci_ext[, ..spec])
-d_K <- cbind(dc_init[, "Description"], as.data.table(d_K))
+d_K <- cbind(dc_init[, c("Description", "AlternativeNo", "ControlCategoryName", "period")], 
+             as.data.table(d_K))
 
 ## 4.2. Predict colonisation and extinction ------------------------------------
 
@@ -257,7 +260,7 @@ dcce_pred <- dcce[, pred_dyn(.SD), by = c("Description", "AlternativeNo", "Contr
 ## 6. Create output data -------------------------------------------------------
 
 ## Combine colonisation-extinction predictions with original initial status:
-d_pred <- rbind(dci_pred, dcce_pred)
+d_pred <- rbind(d_K, dcce_pred)
 
 ## Select wood-decaying fungi again to export and rename:
 d_pred[, colnames(d_pred) %in% c(WDF, "period", "Description", "AlternativeNo", "ControlCategoryName"), with = FALSE]
