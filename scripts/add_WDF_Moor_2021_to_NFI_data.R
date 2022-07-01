@@ -31,7 +31,7 @@ mp <- structure(list(Stand.age.group.min = c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 21L
                      probability = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 
                                                1L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 
                                                1L, 1L, 1L, 2L, 2L, 2L, 2L), 
-                                             .Label = c("colonization", "extinction", "start"), 
+                                             .Label = c("colonization", "extinction"), 
                                              class = "factor"), 
                      variable = structure(c(1L, 2L, 3L,4L, 1L, 2L, 3L, 4L, 1L, 2L, 
                                             3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 
@@ -156,7 +156,7 @@ pred_prob <- function(x, probability){
   ## Make predictions for the two different diameter classes:
   WDF5 <- mp_T["Intercept", dbh_5_spec] + 
     mp_T["Dead.wood.volume", dbh_5_spec]*
-    (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd5[1, 1])/msd5[1, 2] +
+    (log(x$DeadWoodVolumeSpruce) - msd5[1, 1])/msd5[1, 2] +
     mp_T["Stand.age.at.T2", dbh_5_spec]*
     (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
     mp_T["Spruce.volume", dbh_5_spec]*
@@ -164,7 +164,7 @@ pred_prob <- function(x, probability){
   names(WDF5) <- dbh_5_spec
   WDF10 <- mp_T["Intercept", dbh_10_spec] +
     mp_T["Dead.wood.volume", dbh_10_spec]*
-    (log(max(x$DeadWoodVolumeSpruce, 1e-12)) - msd10[1, 1])/msd10[1, 2] +
+    (log(x$DeadWoodVolumeSpruce) - msd10[1, 1])/msd10[1, 2] +
     mp_T["Stand.age.at.T2", dbh_10_spec]*
     (ifelse(probability == "extinction", x$Age, log(max(x$Age, 1e-12))) - msd5[2, 1])/msd5[2, 2] +
     mp_T["Spruce.volume", dbh_10_spec]*
@@ -204,6 +204,8 @@ spec <- c(dbh_5_spec, dbh_10_spec)
 
 ## Calculate carrying capacity K = c/(c+e) for every NFI:
 d_K <- dci_col[, ..spec] / (dci_col[, ..spec] + dci_ext[, ..spec])
+## Set K to 0 where there is no dead wood:
+d_K <- lapply(d_K, function(x) ifelse(dc_init$DeadWoodVolumeSpruce == 0, 0, x))
 d_K <- cbind(dc_init[, c("Description", "AlternativeNo", "ControlCategoryName", "period")], 
              as.data.table(d_K))
 
@@ -213,19 +215,25 @@ d_K <- cbind(dc_init[, c("Description", "AlternativeNo", "ControlCategoryName", 
 dc_col <- d_cov[d_cov$ControlCategoryName != "Initial state", ]
 mp_red <- mp[mp$probability == "colonization", ]
 msd_red <- as.data.table(md_orig[md_orig$Model.component == "colonization", ])
-## Predict colonization state WDF data and combine with unique ID data:
+## Predict colonization state WDF data:
 dcc_pred <- dc_col[, pred_prob(.SD, "colonization"), by = 1:nrow(dc_col)]
+## Set colonisation to 0 where there is no dead wood:
+dcc_pred <- lapply(dcc_pred[, -1], function(x) ifelse(dc_col$DeadWoodVolumeSpruce == 0, 0, x))
+## Combine with unique ID data:
 dcc_pred <- cbind(dc_col[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                  dcc_pred[, -1])
+                  as.data.table(dcc_pred))
 
 ## Colonisation Heureka data, model parameters, and Mean & SD:
 dc_ext <- d_cov[d_cov$ControlCategoryName != "Initial state", ]
 mp_red <- mp[mp$probability == "extinction", ]
 msd_red <- as.data.table(md_orig[md_orig$Model.component == "extinction", ])
-## Predict extinction state WDF data and combine with unique ID data:
+## Predict extinction state WDF data:
 dce_pred <- dc_ext[, pred_prob(.SD, "extinction"), by = 1:nrow(dc_ext)]
+## Set extinction to 1 where there is no dead wood:
+dce_pred <- lapply(dce_pred[, -1], function(x) ifelse(dc_ext$DeadWoodVolumeSpruce == 0, 1, x))
+## Combine with unique ID data:
 dce_pred <- cbind(dc_ext[, c("Description", "period", "AlternativeNo", "ControlCategoryName")],
-                  dce_pred[, -1])
+                  as.data.table(dce_pred))
 
 ## 5. Predict occupancy according to colonisation - extinction dynamics --------
 
